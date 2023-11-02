@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
@@ -13,7 +12,7 @@ public class Manager : MonoBehaviour
 
     public int port;
     private Socket m_listener = null;
-
+    public Text Ip_Text_host;
     enum State
     {
         don_Start ,
@@ -27,6 +26,10 @@ public class Manager : MonoBehaviour
 
     private void Start() {
         m_state = State.don_Start;
+        IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach(IPAddress ip in host.AddressList){
+           Ip_Text_host.text= ip.ToString();
+        }
     }
 
     void Update()
@@ -59,7 +62,9 @@ public class Manager : MonoBehaviour
     }
 
     public void Start_Create(){
+        Debug.Log("시작");
         m_state = State.StartListener;
+       
     }
 
     void create_take_Value(){
@@ -67,7 +72,7 @@ public class Manager : MonoBehaviour
         m_listener = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
         m_listener.Bind(new IPEndPoint(IPAddress.Any,port));
         m_listener.Listen(1);
-
+        Debug.Log("값");
         m_state = State.AcceptClient;
     }
 
@@ -75,24 +80,37 @@ public class Manager : MonoBehaviour
     {
         if(m_listener != null && m_listener.Poll(0, SelectMode.SelectRead)){
             m_socket = m_listener.Accept();
+            Debug.Log("연결");
             m_state = State.ServerCommunication;
         }
     }
 
     void ServerCommunication(){
+        Debug.Log("커뮤");
         byte[] buffer = new byte[1400];
         IPEndPoint sender = new IPEndPoint(IPAddress.Any,0);
         EndPoint SenderRemote = sender;
-        int recvSize = m_listener.ReceiveFrom(buffer,SocketFlags.None,ref SenderRemote);
+        int recvSize = m_socket.Receive(buffer, buffer.Length, SocketFlags.None);
         if(recvSize > 0){
             string message = System.Text.Encoding.UTF8.GetString(buffer);
             string packetType = message.Split('#')[0];
             string packetData = message.Split('#')[1];
-
-            /*Switch(packetType){
-                case "Player Info":
-                
-            }*/
+            Debug.Log(message);
+            switch(packetType){
+                case "PlayerInfo":
+                    PlayerInfo playerInfo = new PlayerInfo();
+                    playerInfo = JsonUtility.FromJson<PlayerInfo>(packetData);
+                    Debug.Log(string.Format("닉네임 : {0},IP : {1},  Port : {2}",playerInfo.Nick_name,playerInfo.
+                    playeraddress,playerInfo.player_Port));
+                   break;
+                case"ControllInfo":
+                    ControllInfo cInfo = new ControllInfo();
+                    cInfo = JsonUtility.FromJson<ControllInfo>(packetData);
+                    break; 
+                default:
+                    Debug.Log("정의되지 않은 패킷입니다. : "+ packetData);
+                    break;
+            }
         }
     }
 

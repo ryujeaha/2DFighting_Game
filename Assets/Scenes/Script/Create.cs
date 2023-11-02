@@ -7,17 +7,14 @@ public class Create : MonoBehaviour
     
    public GameObject On_Ui;
    public GameObject False_btn;
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+   public GameObject Info_input;
+   public GameObject Btn;
 
+   public void finish_info(){
+    Info_input.SetActive(false);
+    Btn.SetActive(true);
+   }
 
     public void OnClick(){
         
